@@ -1,0 +1,12 @@
+node_modules/
+outputs/
+work/
+dist/
+src/renderer/dist/
+*.log
+*.exe
+*.blockmap
+*.signalwall
+.env
+.env.*
+!.env.example

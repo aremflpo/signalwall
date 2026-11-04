@@ -1,0 +1,53 @@
+{
+  "name": "signal-wall",
+  "version": "0.3.3",
+  "description": "Multiview de escritorio de baja latencia para fuentes SRT y RTMP.",
+  "author": "Signal Wall",
+  "license": "UNLICENSED",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "build:renderer": "node scripts/build-renderer.mjs",
+    "start": "npm run build:renderer && electron .",
+    "dev": "npm run build:renderer && electron . --dev",
+    "test": "node --test",
+    "smoke:stream": "node scripts/smoke-stream.js",
+    "verify:configured": "node scripts/verify-configured-stream.js",
+    "pack": "npm run build:renderer && electron-builder --dir",
+    "dist": "npm run build:renderer && electron-builder"
+  },
+  "build": {
+    "appId": "com.signalwall.desktop",
+    "productName": "Signal Wall",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "signalwall",
+        "name": "Signal Wall Multiview",
+        "description": "Multiview exportado de Signal Wall",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "mpegts.js": "^1.8.2"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.25.11"
+  }
+}

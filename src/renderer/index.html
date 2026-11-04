@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src http://127.0.0.1:*; media-src blob:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signal Wall</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <strong>Signal Wall</strong>
+            <span>Control de señales // CRT</span>
+          </div>
+        </div>
+
+        <div class="transport-actions">
+          <button class="button ghost" id="stop-all-button" type="button">
+            <span class="button-icon stop-icon"></span> Detener todo
+          </button>
+          <button class="button primary" id="start-all-button" type="button">
+            <span class="button-icon play-icon"></span> Iniciar todo
+          </button>
+        </div>
+
+        <div class="system-status">
+          <span class="system-dot" id="ffmpeg-dot"></span>
+          <span id="ffmpeg-label">Comprobando FFmpeg…</span>
+          <button class="icon-button" id="settings-button" type="button" title="Configuración" aria-label="Configuración">⌘</button>
+        </div>
+      </header>
+
+      <aside class="sidebar">
+        <div class="sidebar-heading">
+          <div>
+            <span class="eyebrow">Entradas</span>
+            <h1>Fuentes</h1>
+          </div>
+          <span class="count-badge" id="source-count">0</span>
+        </div>
+
+        <button class="add-source-button" id="add-source-button" type="button">
+          <span>＋</span>
+          <span><strong>Nueva fuente</strong><small>SRT, RTMP o RTMPS</small></span>
+        </button>
+
+        <p class="library-hint">Arrastra una señal hacia cualquier espacio del muro. Arrástrala de vuelta aquí para quitarla del multiview.</p>
+
+        <div class="source-list" id="source-list"></div>
+
+        <div class="sidebar-footer">
+          <span class="eyebrow">Vista</span>
+          <div class="layout-picker" aria-label="Columnas del mosaico">
+            <button type="button" data-columns="1">1×1</button>
+            <button type="button" data-columns="2">2×2</button>
+            <button type="button" data-columns="3">3×3</button>
+            <button type="button" data-columns="4">4×4</button>
+          </div>
+          <p>Doble clic en una señal para aislarla.</p>
+        </div>
+      </aside>
+
+      <main class="stage">
+        <div class="stage-heading">
+          <div class="wall-heading-main">
+            <span class="eyebrow">Monitoreo en vivo</span>
+            <div class="wall-title-row">
+              <select id="multiview-select" aria-label="Multiview activo"></select>
+              <span class="save-state" id="save-state">Guardado</span>
+            </div>
+          </div>
+          <div class="wall-meta">
+            <div class="wall-summary" id="wall-summary">Sin fuentes</div>
+            <div class="wall-actions">
+              <button type="button" id="new-wall-button" title="Crear multiview">＋ Nuevo</button>
+              <button type="button" id="save-wall-button" title="Guardar multiview">Guardar</button>
+              <button type="button" id="import-wall-button" title="Importar archivo .signalwall">Importar</button>
+              <button type="button" id="export-wall-button" title="Exportar multiview">Exportar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="video-grid" id="video-grid"></div>
+
+        <section class="empty-state" id="empty-state">
+          <div class="empty-visual" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <h2>Tu multiview está listo</h2>
+          <p>Agrega una entrada SRT o RTMP para empezar a monitorear.</p>
+          <button class="button primary" id="empty-add-button" type="button">Agregar primera fuente</button>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="modal multiview-modal" id="multiview-dialog">
+      <form method="dialog" id="multiview-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">Diseño del muro</span>
+            <h2>Nuevo multiview</h2>
+          </div>
+          <button class="close-button" value="cancel" formnovalidate aria-label="Cerrar">×</button>
+        </div>
+
+        <label>
+          <span>Nombre del multiview</span>
+          <input id="multiview-name" name="name" maxlength="80" required placeholder="Control principal" />
+        </label>
+
+        <fieldset class="multiview-size-fieldset">
+          <legend>Tamaño del layout</legend>
+          <div class="multiview-size-picker">
+            <label><input type="radio" name="gridSize" value="1" /><span><strong>1×1</strong><small>1 señal</small></span></label>
+            <label><input type="radio" name="gridSize" value="2" checked /><span><strong>2×2</strong><small>4 espacios</small></span></label>
+            <label><input type="radio" name="gridSize" value="3" /><span><strong>3×3</strong><small>9 espacios</small></span></label>
+            <label><input type="radio" name="gridSize" value="4" /><span><strong>4×4</strong><small>16 espacios</small></span></label>
+          </div>
+        </fieldset>
+
+        <div class="form-note">
+          <strong>Después</strong>
+          <span>Arrastra las señales a sus espacios, guarda el muro y expórtalo para compartir exactamente este diseño.</span>
+        </div>
+
+        <p class="form-error" id="multiview-form-error" role="alert"></p>
+
+        <div class="modal-actions">
+          <span class="modal-spacer"></span>
+          <button class="button ghost" value="cancel" formnovalidate>Cancelar</button>
+          <button class="button primary" value="default">Crear multiview</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="source-dialog">
+      <form method="dialog" id="source-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">Configuración de entrada</span>
+            <h2 id="source-dialog-title">Nueva fuente</h2>
+          </div>
+          <button class="close-button" value="cancel" formnovalidate aria-label="Cerrar">×</button>
+        </div>
+
+        <label>
+          <span>Nombre</span>
+          <input id="source-name" name="name" maxlength="80" placeholder="Cámara principal" />
+        </label>
+
+        <label>
+          <span>URL de la señal</span>
+          <input id="source-url" name="url" required spellcheck="false" placeholder="srt://192.168.1.20:9000?mode=caller" />
+          <small>Admite srt://, rtmp:// y rtmps://. Los parámetros SRT se escriben en la URL.</small>
+        </label>
+
+        <div class="form-row">
+          <label>
+            <span>Latencia SRT (ms)</span>
+            <input id="source-latency" name="latency" type="number" min="20" max="8000" value="120" />
+          </label>
+          <label>
+            <span>Perfil de video</span>
+            <select id="source-profile" name="profile">
+              <option value="balanced">Equilibrado · 960 px</option>
+              <option value="performance">Rendimiento · 640 px</option>
+              <option value="copy">Directo · experimental</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-note">
+          <strong>Consejo</strong>
+          <span>“Directo” consume menos CPU, pero exige H.264/AAC con cabeceras SPS/PPS repetidas. Equilibrado es la opción recomendada.</span>
+        </div>
+
+        <p class="form-error" id="source-form-error" role="alert"></p>
+
+        <div class="modal-actions">
+          <button class="button danger hidden" id="delete-source-button" type="button">Eliminar</button>
+          <span class="modal-spacer"></span>
+          <button class="button ghost" value="cancel" formnovalidate>Cancelar</button>
+          <button class="button primary" id="save-source-button" value="default">Guardar fuente</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal settings-modal" id="settings-dialog">
+      <form method="dialog">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">Sistema</span>
+            <h2>Configuración</h2>
+          </div>
+          <button class="close-button" value="cancel" aria-label="Cerrar">×</button>
+        </div>
+
+        <section class="settings-section">
+          <span class="settings-icon">ƒ</span>
+          <div>
+            <strong>Motor FFmpeg</strong>
+            <p id="ffmpeg-detail">Buscando en el sistema…</p>
+            <button class="button compact" id="choose-ffmpeg-button" type="button">Seleccionar ffmpeg.exe</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <span class="settings-icon ndi">N</span>
+          <div>
+            <strong>Adaptador NDI®</strong>
+            <p>Preparado como siguiente módulo. Requiere instalar e integrar el SDK oficial y respetar sus condiciones de distribución.</p>
+            <button class="link-button" id="ndi-info-button" type="button">Abrir documentación oficial ↗</button>
+          </div>
+        </section>
+
+        <p class="trademark">NDI® es una marca registrada de Vizrt NDI AB.</p>
+      </form>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="dist/app.js"></script>
+  </body>
+</html>
